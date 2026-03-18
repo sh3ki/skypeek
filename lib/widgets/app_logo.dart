@@ -6,12 +6,7 @@ class AppLogo extends StatelessWidget {
   final bool showText;
   final bool lightText;
 
-  const AppLogo({
-    super.key,
-    this.size = 48,
-    this.showText = true,
-    this.lightText = true,
-  });
+  const AppLogo({super.key, this.size = 48, this.showText = true, this.lightText = false});
 
   @override
   Widget build(BuildContext context) {
@@ -22,70 +17,20 @@ class AppLogo extends StatelessWidget {
           width: size,
           height: size,
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [AppTheme.primary, AppTheme.secondary],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(size * 0.28),
-            boxShadow: [
-              BoxShadow(
-                color: AppTheme.primary.withOpacity(0.4),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              ),
-            ],
+            color: AppTheme.secondary,
+            borderRadius: BorderRadius.circular(size * 0.25),
           ),
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              Positioned(
-                top: size * 0.18,
-                right: size * 0.12,
-                child: Icon(
-                  Icons.wb_sunny_rounded,
-                  color: Colors.amber.shade300,
-                  size: size * 0.45,
-                ),
-              ),
-              Positioned(
-                bottom: size * 0.14,
-                left: size * 0.08,
-                child: Icon(
-                  Icons.cloud_rounded,
-                  color: Colors.white,
-                  size: size * 0.52,
-                ),
-              ),
-            ],
-          ),
+          child: Icon(Icons.cloud_rounded, color: Colors.white, size: size * 0.5),
         ),
         if (showText) ...[
-          SizedBox(width: size * 0.2),
-          RichText(
-            text: TextSpan(
-              children: [
-                TextSpan(
-                  text: 'Sky',
-                  style: TextStyle(
-                    fontSize: size * 0.48,
-                    fontWeight: FontWeight.w900,
-                    color: lightText ? Colors.white : AppTheme.primary,
-                    letterSpacing: -0.5,
-                  ),
-                ),
-                TextSpan(
-                  text: 'Peek',
-                  style: TextStyle(
-                    fontSize: size * 0.48,
-                    fontWeight: FontWeight.w400,
-                    color: lightText
-                        ? Colors.white.withOpacity(0.85)
-                        : AppTheme.textPrimary,
-                  ),
-                ),
-              ],
-            ),
+          SizedBox(width: size * 0.25),
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Sky', style: TextStyle(color: lightText ? Colors.white : AppTheme.textPrimary, fontSize: size * 0.38, fontWeight: FontWeight.w700, height: 1.1)),
+              Text('Peek', style: TextStyle(color: AppTheme.secondary, fontSize: size * 0.38, fontWeight: FontWeight.w700, height: 1.1)),
+            ],
           ),
         ],
       ],
