@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/services.dart';
 import 'screens/splash_screen.dart';
 import 'theme/app_theme.dart';
@@ -10,7 +9,6 @@ void main() {
     statusBarColor: Colors.transparent,
     statusBarIconBrightness: Brightness.light,
   ));
-  GoogleFonts.config.allowRuntimeFetching = false;
   runApp(const SkyPeekApp());
 }
 
