@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 enum WeatherCondition {
   sunny,
   partlyCloudy,
@@ -12,43 +14,27 @@ enum WeatherCondition {
 extension WeatherConditionExt on WeatherCondition {
   String get label {
     switch (this) {
-      case WeatherCondition.sunny:
-        return 'Sunny';
-      case WeatherCondition.partlyCloudy:
-        return 'Partly Cloudy';
-      case WeatherCondition.cloudy:
-        return 'Cloudy';
-      case WeatherCondition.rainy:
-        return 'Rainy';
-      case WeatherCondition.stormy:
-        return 'Stormy';
-      case WeatherCondition.snowy:
-        return 'Snowy';
-      case WeatherCondition.foggy:
-        return 'Foggy';
-      case WeatherCondition.windy:
-        return 'Windy';
+      case WeatherCondition.sunny: return 'Sunny';
+      case WeatherCondition.partlyCloudy: return 'Partly Cloudy';
+      case WeatherCondition.cloudy: return 'Cloudy';
+      case WeatherCondition.rainy: return 'Rainy';
+      case WeatherCondition.stormy: return 'Stormy';
+      case WeatherCondition.snowy: return 'Snowy';
+      case WeatherCondition.foggy: return 'Foggy';
+      case WeatherCondition.windy: return 'Windy';
     }
   }
 
-  String get emoji {
+  IconData get icon {
     switch (this) {
-      case WeatherCondition.sunny:
-        return '☀️';
-      case WeatherCondition.partlyCloudy:
-        return '⛅';
-      case WeatherCondition.cloudy:
-        return '☁️';
-      case WeatherCondition.rainy:
-        return '🌧️';
-      case WeatherCondition.stormy:
-        return '⛈️';
-      case WeatherCondition.snowy:
-        return '❄️';
-      case WeatherCondition.foggy:
-        return '🌫️';
-      case WeatherCondition.windy:
-        return '💨';
+      case WeatherCondition.sunny: return Icons.wb_sunny_rounded;
+      case WeatherCondition.partlyCloudy: return Icons.cloud_queue_rounded;
+      case WeatherCondition.cloudy: return Icons.cloud_rounded;
+      case WeatherCondition.rainy: return Icons.grain_rounded;
+      case WeatherCondition.stormy: return Icons.thunderstorm_rounded;
+      case WeatherCondition.snowy: return Icons.ac_unit_rounded;
+      case WeatherCondition.foggy: return Icons.blur_on_rounded;
+      case WeatherCondition.windy: return Icons.air_rounded;
     }
   }
 }
