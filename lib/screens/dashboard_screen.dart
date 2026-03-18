@@ -1,429 +1,209 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import '../models/weather_model.dart';
-import '../widgets/weather_icon.dart';
+import '../theme/app_theme.dart';
 import '../widgets/weather_card.dart';
-import 'hourly_forecast_screen.dart';
 import 'air_quality_screen.dart';
+import 'weekly_forecast_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
   final CityWeather city;
   final bool useCelsius;
 
-  const DashboardScreen({
-    super.key,
-    required this.city,
-    required this.useCelsius,
-  });
+  const DashboardScreen({super.key, required this.city, required this.useCelsius});
 
-  String _temp(double c) {
-    if (useCelsius) return '${c.round()}°C';
-    return '${(c * 9 / 5 + 32).round()}°F';
-  }
+  String _temp(double c) => useCelsius ? '${c.round()}°C' : '${(c * 9 / 5 + 32).round()}°F';
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: WeatherConditionBackground(
-        condition: city.condition,
-        child: SafeArea(
-          bottom: false,
-          child: CustomScrollView(
-            slivers: [
-              _buildHeader(context),
-              _buildHeroTemp(),
-              _buildHourlySection(context),
-              _buildMetricsGrid(context),
-              _buildSunriseSection(),
-              _buildAirQualityTeaser(context),
-              const SliverToBoxAdapter(child: SizedBox(height: 100)),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeader(BuildContext context) {
-    return SliverToBoxAdapter(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return SafeArea(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            // Header
+            Row(
               children: [
-                Row(
-                  children: [
-                    const Icon(Icons.location_on_rounded,
-                        color: Colors.white70, size: 16),
-                    const SizedBox(width: 4),
-                    Text(
-                      city.city,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 22,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        city.country,
-                        style: const TextStyle(
-                            color: Colors.white70,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  city.timezone,
-                  style: const TextStyle(
-                      color: Colors.white60, fontSize: 12),
-                ),
+                Icon(Icons.location_on_rounded, color: AppTheme.secondary, size: 18),
+                const SizedBox(width: 6),
+                Text(city.city, style: const TextStyle(color: AppTheme.textPrimary, fontSize: 16, fontWeight: FontWeight.w600)),
+                Text(', ${city.country}', style: const TextStyle(color: AppTheme.textSecondary, fontSize: 14)),
+                const Spacer(),
+                Text(city.timezone, style: const TextStyle(color: AppTheme.textSecondary, fontSize: 11)),
               ],
             ),
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: const Icon(Icons.notifications_none_rounded,
-                  color: Colors.white, size: 22),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+            const SizedBox(height: 24),
 
-  Widget _buildHeroTemp() {
-    return SliverToBoxAdapter(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+            // Hero Temperature
+            SurfaceCard(
+              padding: const EdgeInsets.all(24),
+              child: Row(
                 children: [
-                  Text(
-                    useCelsius
-                        ? '${city.tempC.round()}°'
-                        : '${city.tempF.round()}°',
-                    style: const TextStyle(
-                      fontSize: 88,
-                      fontWeight: FontWeight.w900,
-                      color: Colors.white,
-                      height: 1,
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(_temp(city.tempC), style: const TextStyle(color: AppTheme.textPrimary, fontSize: 56, fontWeight: FontWeight.w700, height: 1)),
+                        const SizedBox(height: 4),
+                        Text(city.condition.label, style: const TextStyle(color: AppTheme.textSecondary, fontSize: 16)),
+                        const SizedBox(height: 2),
+                        Text('Feels like ${_temp(city.feelsLikeC)}', style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    city.condition.label,
-                    style: const TextStyle(
-                        color: Colors.white70,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600),
+                  WeatherIcon(condition: city.condition, size: 72),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // Hourly scroll
+            const Text('Hourly', style: TextStyle(color: AppTheme.textPrimary, fontSize: 16, fontWeight: FontWeight.w600)),
+            const SizedBox(height: 12),
+            SizedBox(
+              height: 110,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: city.hourly.length,
+                itemBuilder: (context, i) {
+                  final h = city.hourly[i];
+                  return HourlyCard(
+                    hour: h.hour,
+                    temp: _temp(h.tempC),
+                    condition: h.condition,
+                    isNow: i == 0,
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // Metrics grid
+            const Text('Details', style: TextStyle(color: AppTheme.textPrimary, fontSize: 16, fontWeight: FontWeight.w600)),
+            const SizedBox(height: 12),
+            GridView.count(
+              crossAxisCount: 2,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              mainAxisSpacing: 12,
+              crossAxisSpacing: 12,
+              childAspectRatio: 1.6,
+              children: [
+                MetricCard(icon: Icons.water_drop_rounded, label: 'Humidity', value: '${city.humidity}', unit: '%'),
+                MetricCard(icon: Icons.air_rounded, label: 'Wind', value: '${city.windSpeedKmh}', unit: 'km/h'),
+                MetricCard(icon: Icons.wb_sunny_outlined, label: 'UV Index', value: '${city.uvIndex}'),
+                MetricCard(icon: Icons.compress_rounded, label: 'Pressure', value: '${city.pressure}', unit: 'hPa'),
+                MetricCard(icon: Icons.visibility_rounded, label: 'Visibility', value: '${city.visibility}', unit: 'km'),
+                MetricCard(icon: Icons.eco_rounded, label: 'Air Quality', value: '${city.airQuality.aqi}', unit: city.airQuality.aqiLabel),
+              ],
+            ),
+            const SizedBox(height: 20),
+
+            // Sunrise / Sunset
+            SurfaceCard(
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(color: AppTheme.accent.withOpacity(0.12), borderRadius: BorderRadius.circular(10)),
+                          child: const Icon(Icons.wb_twilight_rounded, color: AppTheme.accent, size: 20),
+                        ),
+                        const SizedBox(width: 12),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('Sunrise', style: TextStyle(color: AppTheme.textSecondary, fontSize: 11)),
+                            Text(city.sunrise, style: const TextStyle(color: AppTheme.textPrimary, fontSize: 14, fontWeight: FontWeight.w600)),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Feels like ${_temp(city.feelsLikeC)}',
-                    style: const TextStyle(
-                        color: Colors.white60, fontSize: 13),
+                  Container(width: 1, height: 36, color: AppTheme.divider),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 16),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(color: AppTheme.primary.withOpacity(0.08), borderRadius: BorderRadius.circular(10)),
+                            child: Icon(Icons.nights_stay_rounded, color: AppTheme.primary.withOpacity(0.6), size: 20),
+                          ),
+                          const SizedBox(width: 12),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('Sunset', style: TextStyle(color: AppTheme.textSecondary, fontSize: 11)),
+                              Text(city.sunset, style: const TextStyle(color: AppTheme.textPrimary, fontSize: 14, fontWeight: FontWeight.w600)),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ],
               ),
             ),
-            WeatherIcon(condition: city.condition, size: 100),
+            const SizedBox(height: 20),
+
+            // Quick links
+            Row(
+              children: [
+                Expanded(
+                  child: _QuickLink(
+                    icon: Icons.calendar_view_week_rounded,
+                    label: '7-Day Forecast',
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => WeeklyForecastScreen(city: city, useCelsius: useCelsius))),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _QuickLink(
+                    icon: Icons.eco_rounded,
+                    label: 'Air Quality',
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => AirQualityScreen(airQuality: city.airQuality, cityName: city.city))),
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       ),
     );
   }
+}
 
-  Widget _buildHourlySection(BuildContext context) {
-    return SliverToBoxAdapter(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Hourly Forecast',
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800),
-                ),
-                GestureDetector(
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => HourlyForecastScreen(
-                        city: city,
-                        useCelsius: useCelsius,
-                      ),
-                    ),
-                  ),
-                  child: const Text(
-                    'See all',
-                    style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          SizedBox(
-            height: 118,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.only(left: 20),
-              itemCount: city.hourly.length > 12 ? 12 : city.hourly.length,
-              itemBuilder: (context, i) {
-                final h = city.hourly[i];
-                return HourlyCard(
-                  hour: h.hour,
-                  temp: useCelsius
-                      ? '${h.tempC.round()}°'
-                      : '${h.tempF.round()}°',
-                  icon: WeatherIcon(condition: h.condition, size: 30),
-                  isNow: i == 0,
-                );
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+class _QuickLink extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
 
-  Widget _buildMetricsGrid(BuildContext context) {
-    return SliverToBoxAdapter(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-        child: AnimationLimiter(
-          child: GridView.count(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            crossAxisCount: 2,
-            childAspectRatio: 1.6,
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
-            children: AnimationConfiguration.toStaggeredList(
-              duration: const Duration(milliseconds: 300),
-              childAnimationBuilder: (w) => SlideAnimation(
-                verticalOffset: 20,
-                child: FadeInAnimation(child: w),
-              ),
-              children: [
-                MetricCard(
-                  icon: Icons.water_drop_rounded,
-                  label: 'Humidity',
-                  value: '${city.humidity}',
-                  unit: '%',
-                  iconColor: Colors.lightBlue.shade200,
-                ),
-                MetricCard(
-                  icon: Icons.air_rounded,
-                  label: 'Wind',
-                  value: '${city.windSpeedKmh.round()}',
-                  unit: 'km/h',
-                  iconColor: Colors.white70,
-                ),
-                MetricCard(
-                  icon: Icons.wb_sunny_outlined,
-                  label: 'UV Index',
-                  value: '${city.uvIndex}',
-                  unit: _uvLabel(city.uvIndex),
-                  iconColor: Colors.amber.shade300,
-                ),
-                MetricCard(
-                  icon: Icons.compress_rounded,
-                  label: 'Pressure',
-                  value: '${city.pressure}',
-                  unit: 'hPa',
-                  iconColor: Colors.purple.shade200,
-                ),
-              ],
-            ),
-          ),
+  const _QuickLink({required this.icon, required this.label, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: AppTheme.cardBg,
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: AppTheme.cardShadow,
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: AppTheme.secondary, size: 20),
+            const SizedBox(width: 10),
+            Expanded(child: Text(label, style: const TextStyle(color: AppTheme.textPrimary, fontSize: 13, fontWeight: FontWeight.w600))),
+            const Icon(Icons.chevron_right_rounded, color: AppTheme.textSecondary, size: 18),
+          ],
         ),
       ),
     );
-  }
-
-  String _uvLabel(int uv) {
-    if (uv <= 2) return 'Low';
-    if (uv <= 5) return 'Mod';
-    if (uv <= 7) return 'High';
-    if (uv <= 10) return 'V.High';
-    return 'Extreme';
-  }
-
-  Widget _buildSunriseSection() {
-    return SliverToBoxAdapter(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-        child: Container(
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.15),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.white.withOpacity(0.25)),
-          ),
-          padding: const EdgeInsets.all(20),
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  children: [
-                    const Icon(Icons.wb_twilight_rounded,
-                        color: Colors.amber, size: 32),
-                    const SizedBox(height: 8),
-                    const Text('Sunrise',
-                        style: TextStyle(
-                            color: Colors.white70,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 4),
-                    Text(
-                      city.sunrise,
-                      style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w800),
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                width: 1,
-                height: 60,
-                color: Colors.white.withOpacity(0.3),
-              ),
-              Expanded(
-                child: Column(
-                  children: [
-                    const Icon(Icons.nightlight_round,
-                        color: Colors.orange, size: 32),
-                    const SizedBox(height: 8),
-                    const Text('Sunset',
-                        style: TextStyle(
-                            color: Colors.white70,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 4),
-                    Text(
-                      city.sunset,
-                      style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w800),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAirQualityTeaser(BuildContext context) {
-    final aq = city.airQuality;
-    return SliverToBoxAdapter(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-        child: GestureDetector(
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => AirQualityScreen(city: city),
-            ),
-          ),
-          child: Container(
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.15),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.white.withOpacity(0.25)),
-            ),
-            padding: const EdgeInsets.all(20),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('Air Quality',
-                        style: TextStyle(
-                            color: Colors.white70,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 6),
-                    Row(
-                      children: [
-                        Text(
-                          '${aq.aqi}',
-                          style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 32,
-                              fontWeight: FontWeight.w900),
-                        ),
-                        const SizedBox(width: 10),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: _aqiColor(aq.aqi).withOpacity(0.3),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                                color: _aqiColor(aq.aqi).withOpacity(0.6)),
-                          ),
-                          child: Text(
-                            aq.aqiLabel,
-                            style: TextStyle(
-                                color: _aqiColor(aq.aqi),
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                const Icon(Icons.arrow_forward_ios_rounded,
-                    color: Colors.white60, size: 16),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Color _aqiColor(int aqi) {
-    if (aqi <= 50) return Colors.green.shade300;
-    if (aqi <= 100) return Colors.yellow.shade300;
-    if (aqi <= 150) return Colors.orange.shade300;
-    return Colors.red.shade300;
   }
 }
