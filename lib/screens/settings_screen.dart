@@ -1,358 +1,126 @@
 import 'package:flutter/material.dart';
+import '../models/weather_model.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_logo.dart';
 import '../widgets/weather_card.dart';
 
-class SettingsScreen extends StatefulWidget {
+class SettingsScreen extends StatelessWidget {
   final bool useCelsius;
-  final void Function(bool) onUnitToggle;
+  final ValueChanged<bool> onUnitToggled;
+  final CityWeather currentCity;
 
-  const SettingsScreen({
-    super.key,
-    required this.useCelsius,
-    required this.onUnitToggle,
-  });
-
-  @override
-  State<SettingsScreen> createState() => _SettingsScreenState();
-}
-
-class _SettingsScreenState extends State<SettingsScreen> {
-  late bool _useCelsius;
-  bool _notifications = true;
-  bool _weatherAlerts = true;
-  bool _dailySummary = false;
-  bool _locationServices = true;
-  String _windUnit = 'km/h';
-  String _refreshInterval = 'Every 30 min';
-
-  @override
-  void initState() {
-    super.initState();
-    _useCelsius = widget.useCelsius;
-  }
+  const SettingsScreen({super.key, required this.useCelsius, required this.onUnitToggled, required this.currentCity});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppTheme.surface,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildProfileCard(),
-              const SizedBox(height: 20),
-              _buildSectionLabel('Units'),
-              _buildUnitsSection(),
-              const SizedBox(height: 20),
-              _buildSectionLabel('Notifications'),
-              _buildNotificationsSection(),
-              const SizedBox(height: 20),
-              _buildSectionLabel('Location & Data'),
-              _buildLocationSection(),
-              const SizedBox(height: 20),
-              _buildSectionLabel('About'),
-              _buildAboutSection(),
-              const SizedBox(height: 32),
-              Center(child: AppLogo(size: 36, lightText: false)),
-              const SizedBox(height: 8),
-              Center(
-                child: Text(
-                  'SkyPeek v1.0.0 • Portfolio Demo',
-                  style: const TextStyle(
-                      color: AppTheme.textSecondary, fontSize: 11),
-                ),
-              ),
-              const SizedBox(height: 40),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildProfileCard() {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [AppTheme.primary, AppTheme.secondary],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.primary.withOpacity(0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          )
-        ],
-      ),
-      padding: const EdgeInsets.all(20),
-      child: Row(
-        children: [
-          Container(
-            width: 64,
-            height: 64,
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.25),
-              shape: BoxShape.circle,
-            ),
-            child: const Center(
-              child: Text('AR',
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w900,
-                      fontSize: 22)),
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Alex Rivera',
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800)),
-                const SizedBox(height: 4),
-                Text('New York • USA',
-                    style: TextStyle(
-                        color: Colors.white.withOpacity(0.75),
-                        fontSize: 13)),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  children: [
-                    _profileChip('5 Cities'),
-                    _profileChip('Pro User'),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _profileChip(String label) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.2),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(label,
-          style: const TextStyle(
-              color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
-    );
-  }
-
-  Widget _buildSectionLabel(String label) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
-      child: Text(label,
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w800,
-              )),
-    );
-  }
-
-  Widget _buildUnitsSection() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: SurfaceCard(
+    return SafeArea(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('Temperature',
-                        style: TextStyle(
-                            fontWeight: FontWeight.w700, fontSize: 15)),
-                    Text(_useCelsius ? 'Celsius (°C)' : 'Fahrenheit (°F)',
-                        style: const TextStyle(
-                            color: AppTheme.textSecondary, fontSize: 12)),
-                  ],
-                ),
-                Container(
-                  decoration: BoxDecoration(
-                    color: AppTheme.surface,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppTheme.divider),
+            const Text('Settings', style: TextStyle(color: AppTheme.textPrimary, fontSize: 20, fontWeight: FontWeight.w700)),
+            const SizedBox(height: 24),
+
+            // App info
+            SurfaceCard(
+              child: Row(
+                children: [
+                  const AppLogo(size: 44, showText: true),
+                  const Spacer(),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppTheme.secondary.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Text('v1.0', style: TextStyle(color: AppTheme.secondary, fontSize: 12, fontWeight: FontWeight.w600)),
                   ),
-                  child: Row(
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // Temperature unit
+            const Text('Units', style: TextStyle(color: AppTheme.textPrimary, fontSize: 16, fontWeight: FontWeight.w600)),
+            const SizedBox(height: 12),
+            SurfaceCard(
+              child: Column(
+                children: [
+                  _UnitOption(
+                    label: 'Celsius (°C)',
+                    subtitle: 'Metric temperature',
+                    isSelected: useCelsius,
+                    onTap: () => onUnitToggled(true),
+                  ),
+                  const Divider(height: 1),
+                  _UnitOption(
+                    label: 'Fahrenheit (°F)',
+                    subtitle: 'Imperial temperature',
+                    isSelected: !useCelsius,
+                    onTap: () => onUnitToggled(false),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // Current city info
+            const Text('Current Location', style: TextStyle(color: AppTheme.textPrimary, fontSize: 16, fontWeight: FontWeight.w600)),
+            const SizedBox(height: 12),
+            SurfaceCard(
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(color: AppTheme.secondary.withOpacity(0.12), borderRadius: BorderRadius.circular(12)),
+                    child: const Icon(Icons.location_on_rounded, color: AppTheme.secondary, size: 22),
+                  ),
+                  const SizedBox(width: 14),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _UnitBtn(
-                          label: '°C',
-                          selected: _useCelsius,
-                          onTap: () {
-                            setState(() => _useCelsius = true);
-                            widget.onUnitToggle(true);
-                          }),
-                      _UnitBtn(
-                          label: '°F',
-                          selected: !_useCelsius,
-                          onTap: () {
-                            setState(() => _useCelsius = false);
-                            widget.onUnitToggle(false);
-                          }),
+                      Text(currentCity.city, style: const TextStyle(color: AppTheme.textPrimary, fontSize: 15, fontWeight: FontWeight.w600)),
+                      Text(currentCity.country, style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
                     ],
                   ),
-                ),
-              ],
+                  const Spacer(),
+                  Text(currentCity.timezone, style: const TextStyle(color: AppTheme.textSecondary, fontSize: 11)),
+                ],
+              ),
             ),
-            const Divider(height: 28, color: AppTheme.divider),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Wind Speed',
-                        style: TextStyle(
-                            fontWeight: FontWeight.w700, fontSize: 15)),
-                    Text('Current unit',
-                        style: TextStyle(
-                            color: AppTheme.textSecondary, fontSize: 12)),
-                  ],
-                ),
-                DropdownButton<String>(
-                  value: _windUnit,
-                  underline: const SizedBox(),
-                  style: const TextStyle(
-                      color: AppTheme.primary,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 13),
-                  items: ['km/h', 'm/s', 'mph', 'knots']
-                      .map((u) => DropdownMenuItem(value: u, child: Text(u)))
-                      .toList(),
-                  onChanged: (v) => setState(() => _windUnit = v!),
-                ),
-              ],
-            ),
-            const Divider(height: 28, color: AppTheme.divider),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Refresh Interval',
-                        style: TextStyle(
-                            fontWeight: FontWeight.w700, fontSize: 15)),
-                    Text('Auto update frequency',
-                        style: TextStyle(
-                            color: AppTheme.textSecondary, fontSize: 12)),
-                  ],
-                ),
-                DropdownButton<String>(
-                  value: _refreshInterval,
-                  underline: const SizedBox(),
-                  style: const TextStyle(
-                      color: AppTheme.primary,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 13),
-                  items: ['Every 15 min', 'Every 30 min', 'Every hour', 'Manual']
-                      .map((u) => DropdownMenuItem(value: u, child: Text(u)))
-                      .toList(),
-                  onChanged: (v) => setState(() => _refreshInterval = v!),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+            const SizedBox(height: 20),
 
-  Widget _buildNotificationsSection() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: SurfaceCard(
-        child: Column(
-          children: [
-            _ToggleRow(
-              icon: Icons.notifications_active_rounded,
-              iconColor: AppTheme.primary,
-              label: 'Notifications',
-              subtitle: 'Enable push notifications',
-              value: _notifications,
-              onChanged: (v) => setState(() => _notifications = v),
+            // Preferences
+            const Text('Preferences', style: TextStyle(color: AppTheme.textPrimary, fontSize: 16, fontWeight: FontWeight.w600)),
+            const SizedBox(height: 12),
+            SurfaceCard(
+              child: Column(
+                children: [
+                  _ToggleTile(icon: Icons.notifications_outlined, label: 'Weather Alerts', value: true),
+                  const Divider(height: 1),
+                  _ToggleTile(icon: Icons.dark_mode_outlined, label: 'Dark Mode', value: false),
+                  const Divider(height: 1),
+                  _ToggleTile(icon: Icons.gps_fixed_rounded, label: 'Auto Location', value: true),
+                ],
+              ),
             ),
-            const Divider(height: 20, color: AppTheme.divider),
-            _ToggleRow(
-              icon: Icons.warning_amber_rounded,
-              iconColor: Colors.orange,
-              label: 'Severe Weather Alerts',
-              subtitle: 'Storms, heavy rain, etc.',
-              value: _weatherAlerts,
-              onChanged: (v) => setState(() => _weatherAlerts = v),
-            ),
-            const Divider(height: 20, color: AppTheme.divider),
-            _ToggleRow(
-              icon: Icons.wb_sunny_rounded,
-              iconColor: Colors.amber,
-              label: 'Daily Summary',
-              subtitle: 'Morning weather briefing',
-              value: _dailySummary,
-              onChanged: (v) => setState(() => _dailySummary = v),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+            const SizedBox(height: 20),
 
-  Widget _buildLocationSection() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: SurfaceCard(
-        child: Column(
-          children: [
-            _ToggleRow(
-              icon: Icons.location_on_rounded,
-              iconColor: Colors.red,
-              label: 'Location Services',
-              subtitle: 'Detect current city',
-              value: _locationServices,
-              onChanged: (v) => setState(() => _locationServices = v),
+            // About
+            const Text('About', style: TextStyle(color: AppTheme.textPrimary, fontSize: 16, fontWeight: FontWeight.w600)),
+            const SizedBox(height: 12),
+            SurfaceCard(
+              child: Column(
+                children: [
+                  _InfoRow(label: 'Data Source', value: 'SkyPeek API'),
+                  const Divider(height: 1),
+                  _InfoRow(label: 'Refresh Interval', value: '30 minutes'),
+                  const Divider(height: 1),
+                  _InfoRow(label: 'Cities Available', value: '5'),
+                ],
+              ),
             ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAboutSection() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: SurfaceCard(
-        child: Column(
-          children: [
-            _InfoRow(icon: Icons.code_rounded, label: 'Version', value: 'v1.0.0'),
-            const Divider(height: 20, color: AppTheme.divider),
-            _InfoRow(
-                icon: Icons.cloud_queue_rounded,
-                label: 'Data Source',
-                value: 'Mock Data'),
-            const Divider(height: 20, color: AppTheme.divider),
-            _InfoRow(
-                icon: Icons.flutter_dash_rounded,
-                label: 'Built with',
-                value: 'Flutter 3.24'),
-            const Divider(height: 20, color: AppTheme.divider),
-            _InfoRow(
-                icon: Icons.work_rounded,
-                label: 'Category',
-                value: 'Portfolio App'),
           ],
         ),
       ),
@@ -360,116 +128,82 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 }
 
-class _UnitBtn extends StatelessWidget {
+class _UnitOption extends StatelessWidget {
   final String label;
-  final bool selected;
+  final String subtitle;
+  final bool isSelected;
   final VoidCallback onTap;
 
-  const _UnitBtn(
-      {required this.label, required this.selected, required this.onTap});
+  const _UnitOption({required this.label, required this.subtitle, required this.isSelected, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          color: selected ? AppTheme.primary : Colors.transparent,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: selected ? Colors.white : AppTheme.textSecondary,
-            fontWeight: FontWeight.w700,
-            fontSize: 13,
-          ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        child: Row(
+          children: [
+            Icon(
+              isSelected ? Icons.radio_button_checked_rounded : Icons.radio_button_off_rounded,
+              color: isSelected ? AppTheme.secondary : AppTheme.textSecondary,
+              size: 22,
+            ),
+            const SizedBox(width: 12),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label, style: const TextStyle(color: AppTheme.textPrimary, fontSize: 14, fontWeight: FontWeight.w600)),
+                Text(subtitle, style: const TextStyle(color: AppTheme.textSecondary, fontSize: 11)),
+              ],
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-class _ToggleRow extends StatelessWidget {
+class _ToggleTile extends StatelessWidget {
   final IconData icon;
-  final Color iconColor;
   final String label;
-  final String subtitle;
   final bool value;
-  final void Function(bool) onChanged;
 
-  const _ToggleRow({
-    required this.icon,
-    required this.iconColor,
-    required this.label,
-    required this.subtitle,
-    required this.value,
-    required this.onChanged,
-  });
+  const _ToggleTile({required this.icon, required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(
-          width: 38,
-          height: 38,
-          decoration: BoxDecoration(
-            color: iconColor.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Icon(icon, color: iconColor, size: 20),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(label,
-                  style: const TextStyle(
-                      fontWeight: FontWeight.w700, fontSize: 14)),
-              Text(subtitle,
-                  style: const TextStyle(
-                      color: AppTheme.textSecondary, fontSize: 11)),
-            ],
-          ),
-        ),
-        Switch(
-          value: value,
-          onChanged: onChanged,
-          activeColor: AppTheme.primary,
-        ),
-      ],
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        children: [
+          Icon(icon, color: AppTheme.textSecondary, size: 20),
+          const SizedBox(width: 12),
+          Expanded(child: Text(label, style: const TextStyle(color: AppTheme.textPrimary, fontSize: 14))),
+          Switch(value: value, onChanged: (_) {}, activeColor: AppTheme.secondary),
+        ],
+      ),
     );
   }
 }
 
 class _InfoRow extends StatelessWidget {
-  final IconData icon;
   final String label;
   final String value;
 
-  const _InfoRow(
-      {required this.icon, required this.label, required this.value});
+  const _InfoRow({required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Icon(icon, color: AppTheme.textSecondary, size: 18),
-        const SizedBox(width: 10),
-        Text(label,
-            style: const TextStyle(
-                color: AppTheme.textSecondary,
-                fontSize: 13,
-                fontWeight: FontWeight.w500)),
-        const Spacer(),
-        Text(value,
-            style: const TextStyle(
-                fontWeight: FontWeight.w700, fontSize: 13)),
-      ],
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+          Text(value, style: const TextStyle(color: AppTheme.textPrimary, fontSize: 13, fontWeight: FontWeight.w500)),
+        ],
+      ),
     );
   }
 }
