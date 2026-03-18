@@ -1,67 +1,62 @@
 import 'package:flutter/material.dart';
+import '../models/weather_model.dart';
 import '../theme/app_theme.dart';
+
+class WeatherIcon extends StatelessWidget {
+  final WeatherCondition condition;
+  final double size;
+  final Color? color;
+
+  const WeatherIcon({super.key, required this.condition, this.size = 48, this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    final c = color ?? AppTheme.conditionColor(condition.label);
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: c.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(size * 0.3),
+      ),
+      child: Icon(condition.icon, color: c, size: size * 0.55),
+    );
+  }
+}
 
 class MetricCard extends StatelessWidget {
   final IconData icon;
   final String label;
   final String value;
   final String? unit;
-  final Color? iconColor;
 
-  const MetricCard({
-    super.key,
-    required this.icon,
-    required this.label,
-    required this.value,
-    this.unit,
-    this.iconColor,
-  });
+  const MetricCard({super.key, required this.icon, required this.label, required this.value, this.unit});
 
   @override
   Widget build(BuildContext context) {
     return Container(
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.18),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withOpacity(0.25)),
+        color: AppTheme.cardBg,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: AppTheme.cardShadow,
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Icon(icon, color: iconColor ?? Colors.white70, size: 18),
-              const SizedBox(width: 6),
-              Text(
-                label,
-                style: const TextStyle(
-                    color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w600),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
+          Icon(icon, color: AppTheme.secondary, size: 20),
+          const SizedBox(height: 10),
+          Text(label, style: const TextStyle(color: AppTheme.textSecondary, fontSize: 11)),
+          const SizedBox(height: 2),
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text(
-                value,
-                style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800),
-              ),
+              Text(value, style: const TextStyle(color: AppTheme.textPrimary, fontSize: 18, fontWeight: FontWeight.w700)),
               if (unit != null) ...[
                 const SizedBox(width: 2),
                 Padding(
                   padding: const EdgeInsets.only(bottom: 2),
-                  child: Text(
-                    unit!,
-                    style: const TextStyle(
-                        color: Colors.white70,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w400),
-                  ),
+                  child: Text(unit!, style: const TextStyle(color: AppTheme.textSecondary, fontSize: 11)),
                 ),
               ],
             ],
@@ -75,49 +70,30 @@ class MetricCard extends StatelessWidget {
 class HourlyCard extends StatelessWidget {
   final String hour;
   final String temp;
-  final Widget icon;
+  final WeatherCondition condition;
   final bool isNow;
 
-  const HourlyCard({
-    super.key,
-    required this.hour,
-    required this.temp,
-    required this.icon,
-    this.isNow = false,
-  });
+  const HourlyCard({super.key, required this.hour, required this.temp, required this.condition, this.isNow = false});
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      width: 68,
+    return Container(
+      width: 64,
       margin: const EdgeInsets.only(right: 10),
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
       decoration: BoxDecoration(
-        color: isNow ? Colors.white.withOpacity(0.35) : Colors.white.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-            color: isNow ? Colors.white.withOpacity(0.8) : Colors.white.withOpacity(0.2)),
+        color: isNow ? AppTheme.primary : AppTheme.cardBg,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: isNow ? null : AppTheme.cardShadow,
       ),
-      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 6),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            isNow ? 'Now' : hour,
-            style: TextStyle(
-              color: isNow ? Colors.white : Colors.white70,
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
+          Text(hour, style: TextStyle(color: isNow ? Colors.white70 : AppTheme.textSecondary, fontSize: 11, fontWeight: FontWeight.w600)),
           const SizedBox(height: 8),
-          icon,
+          Icon(condition.icon, color: isNow ? Colors.white : AppTheme.conditionColor(condition.label), size: 22),
           const SizedBox(height: 8),
-          Text(
-            temp,
-            style: const TextStyle(
-                color: Colors.white, fontSize: 15, fontWeight: FontWeight.w800),
-          ),
+          Text(temp, style: TextStyle(color: isNow ? Colors.white : AppTheme.textPrimary, fontSize: 14, fontWeight: FontWeight.w700)),
         ],
       ),
     );
@@ -126,25 +102,19 @@ class HourlyCard extends StatelessWidget {
 
 class SurfaceCard extends StatelessWidget {
   final Widget child;
-  final EdgeInsetsGeometry? padding;
-  final double radius;
+  final EdgeInsets? padding;
 
-  const SurfaceCard({
-    super.key,
-    required this.child,
-    this.padding,
-    this.radius = 20,
-  });
+  const SurfaceCard({super.key, required this.child, this.padding});
 
   @override
   Widget build(BuildContext context) {
     return Container(
+      padding: padding ?? const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppTheme.cardBg,
-        borderRadius: BorderRadius.circular(radius),
-        boxShadow: [AppTheme.cardShadow],
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: AppTheme.cardShadow,
       ),
-      padding: padding ?? const EdgeInsets.all(20),
       child: child,
     );
   }
