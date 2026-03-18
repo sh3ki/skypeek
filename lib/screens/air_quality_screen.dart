@@ -4,344 +4,179 @@ import '../theme/app_theme.dart';
 import '../widgets/weather_card.dart';
 
 class AirQualityScreen extends StatelessWidget {
-  final CityWeather city;
+  final AirQualityData airQuality;
+  final String cityName;
 
-  const AirQualityScreen({super.key, required this.city});
+  const AirQualityScreen({super.key, required this.airQuality, required this.cityName});
+
+  Color _aqiColor(int aqi) {
+    if (aqi <= 50) return AppTheme.success;
+    if (aqi <= 100) return AppTheme.accent;
+    if (aqi <= 150) return const Color(0xFFEF6C00);
+    return const Color(0xFFD32F2F);
+  }
 
   @override
   Widget build(BuildContext context) {
-    final aq = city.airQuality;
     return Scaffold(
       backgroundColor: AppTheme.surface,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildHeader(context),
-              _buildAqiGauge(aq),
-              const SizedBox(height: 20),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Text(
-                  'Pollutants',
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-              ),
-              const SizedBox(height: 12),
-              _buildPollutants(aq),
-              const SizedBox(height: 20),
-              _buildHealthTips(aq.aqi),
-              const SizedBox(height: 40),
-            ],
-          ),
-        ),
+      appBar: AppBar(
+        title: Text('$cityName — Air Quality'),
+        leading: IconButton(icon: const Icon(Icons.arrow_back_rounded), onPressed: () => Navigator.pop(context)),
       ),
-    );
-  }
-
-  Widget _buildHeader(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(8, 12, 20, 0),
-      child: Row(
-        children: [
-          IconButton(
-            icon: const Icon(Icons.arrow_back_ios_rounded,
-                color: AppTheme.textPrimary),
-            onPressed: () => Navigator.pop(context),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Air Quality',
-                  style: Theme.of(context).textTheme.headlineMedium),
-              Text(city.city,
-                  style: const TextStyle(
-                      color: AppTheme.textSecondary, fontSize: 13)),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAqiGauge(AirQualityData aq) {
-    final color = _aqiColor(aq.aqi);
-    return Padding(
-      padding: const EdgeInsets.all(20),
-      child: SurfaceCard(
-        child: Column(
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: RadialGradient(
-                      colors: [color.withOpacity(0.3), color.withOpacity(0.05)],
-                    ),
-                    border: Border.all(color: color, width: 3),
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        '${aq.aqi}',
-                        style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.w900,
-                          color: color,
-                        ),
-                      ),
-                      const Text('AQI',
-                          style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600,
-                              color: AppTheme.textSecondary)),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 20),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: color.withOpacity(0.15),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          aq.aqiLabel,
-                          style: TextStyle(
-                              color: color,
-                              fontWeight: FontWeight.w800,
-                              fontSize: 15),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        _aqiDescription(aq.aqi),
-                        style: const TextStyle(
-                            color: AppTheme.textSecondary, fontSize: 12),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            // AQI scale bar
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: SizedBox(
-                height: 12,
-                child: Row(
-                  children: [
-                    Expanded(
-                        flex: 50,
-                        child: Container(color: Colors.green.shade400)),
-                    Expanded(
-                        flex: 50,
-                        child: Container(color: Colors.yellow.shade600)),
-                    Expanded(
-                        flex: 50,
-                        child: Container(color: Colors.orange.shade500)),
-                    Expanded(
-                        flex: 50,
-                        child: Container(color: Colors.red.shade500)),
-                    Expanded(
-                        flex: 50,
-                        child: Container(color: Colors.purple.shade700)),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 6),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: const [
-                Text('0', style: TextStyle(fontSize: 10, color: AppTheme.textSecondary)),
-                Text('50', style: TextStyle(fontSize: 10, color: AppTheme.textSecondary)),
-                Text('100', style: TextStyle(fontSize: 10, color: AppTheme.textSecondary)),
-                Text('150', style: TextStyle(fontSize: 10, color: AppTheme.textSecondary)),
-                Text('200', style: TextStyle(fontSize: 10, color: AppTheme.textSecondary)),
-                Text('300+', style: TextStyle(fontSize: 10, color: AppTheme.textSecondary)),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPollutants(AirQualityData aq) {
-    final pollutants = [
-      _Pollutant('PM2.5', aq.pm25, 25, 'μg/m³', 'Fine particles'),
-      _Pollutant('PM10', aq.pm10, 50, 'μg/m³', 'Coarse particles'),
-      _Pollutant('NO₂', aq.no2, 60, 'μg/m³', 'Nitrogen dioxide'),
-      _Pollutant('O₃', aq.o3, 100, 'μg/m³', 'Ozone'),
-      _Pollutant('CO', aq.co, 4, 'mg/m³', 'Carbon monoxide'),
-    ];
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: SurfaceCard(
-        child: Column(
-          children: pollutants
-              .map((p) => _PollutantRow(pollutant: p))
-              .toList(),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHealthTips(int aqi) {
-    final tips = _healthTips(aqi);
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: SurfaceCard(
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Icon(Icons.health_and_safety_rounded,
-                    color: _aqiColor(aqi), size: 20),
-                const SizedBox(width: 8),
-                const Text('Health Recommendations',
-                    style: TextStyle(
-                        fontWeight: FontWeight.w800, fontSize: 15)),
-              ],
-            ),
-            const SizedBox(height: 12),
-            ...tips.map((t) => Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Icon(Icons.check_circle_outline_rounded,
-                          color: AppTheme.primary, size: 16),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(t,
-                            style: const TextStyle(
-                                color: AppTheme.textSecondary,
-                                fontSize: 13)),
-                      ),
-                    ],
+            // AQI gauge
+            SurfaceCard(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                children: [
+                  SizedBox(
+                    width: 160,
+                    height: 160,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        SizedBox(
+                          width: 160,
+                          height: 160,
+                          child: CircularProgressIndicator(
+                            value: airQuality.aqi / 300,
+                            strokeWidth: 12,
+                            backgroundColor: AppTheme.divider,
+                            color: _aqiColor(airQuality.aqi),
+                            strokeCap: StrokeCap.round,
+                          ),
+                        ),
+                        Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text('${airQuality.aqi}', style: TextStyle(color: _aqiColor(airQuality.aqi), fontSize: 42, fontWeight: FontWeight.w700)),
+                            Text('AQI', style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
-                )),
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: _aqiColor(airQuality.aqi).withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      airQuality.aqiLabel,
+                      style: TextStyle(color: _aqiColor(airQuality.aqi), fontSize: 14, fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // Pollutant breakdown
+            const Text('Pollutants', style: TextStyle(color: AppTheme.textPrimary, fontSize: 16, fontWeight: FontWeight.w600)),
+            const SizedBox(height: 12),
+            _PollutantTile(label: 'PM2.5', value: airQuality.pm25, unit: 'µg/m³', maxVal: 75, color: AppTheme.secondary),
+            _PollutantTile(label: 'PM10', value: airQuality.pm10, unit: 'µg/m³', maxVal: 150, color: AppTheme.accent),
+            _PollutantTile(label: 'NO₂', value: airQuality.no2, unit: 'µg/m³', maxVal: 100, color: const Color(0xFF8B5CF6)),
+            _PollutantTile(label: 'O₃', value: airQuality.o3, unit: 'µg/m³', maxVal: 120, color: AppTheme.success),
+            _PollutantTile(label: 'CO', value: airQuality.co, unit: 'mg/m³', maxVal: 5, color: const Color(0xFFEC4899)),
+            const SizedBox(height: 20),
+
+            // Scale
+            const Text('AQI Scale', style: TextStyle(color: AppTheme.textPrimary, fontSize: 16, fontWeight: FontWeight.w600)),
+            const SizedBox(height: 12),
+            SurfaceCard(
+              child: Column(
+                children: [
+                  _ScaleRow(range: '0 – 50', label: 'Good', color: AppTheme.success),
+                  const Divider(height: 1),
+                  _ScaleRow(range: '51 – 100', label: 'Moderate', color: AppTheme.accent),
+                  const Divider(height: 1),
+                  _ScaleRow(range: '101 – 150', label: 'Unhealthy for Sensitive', color: const Color(0xFFEF6C00)),
+                  const Divider(height: 1),
+                  _ScaleRow(range: '151 – 200', label: 'Unhealthy', color: const Color(0xFFD32F2F)),
+                  const Divider(height: 1),
+                  _ScaleRow(range: '201 – 300', label: 'Very Unhealthy', color: const Color(0xFF7B1FA2)),
+                ],
+              ),
+            ),
           ],
         ),
       ),
     );
   }
-
-  Color _aqiColor(int aqi) {
-    if (aqi <= 50) return Colors.green.shade500;
-    if (aqi <= 100) return Colors.yellow.shade700;
-    if (aqi <= 150) return Colors.orange.shade600;
-    if (aqi <= 200) return Colors.red.shade500;
-    return Colors.purple.shade700;
-  }
-
-  String _aqiDescription(int aqi) {
-    if (aqi <= 50) return 'Air quality is satisfactory. Ideal for outdoor activities.';
-    if (aqi <= 100) return 'Acceptable air quality. Sensitive groups should limit prolonged outdoor exertion.';
-    if (aqi <= 150) return 'Sensitive individuals may experience health effects.';
-    if (aqi <= 200) return 'Everyone may begin to experience health effects.';
-    return 'Health warnings of emergency conditions.';
-  }
-
-  List<String> _healthTips(int aqi) {
-    if (aqi <= 50) {
-      return [
-        'Great day for outdoor activities',
-        'Windows can be opened for fresh air',
-        'No special precautions needed',
-      ];
-    }
-    if (aqi <= 100) {
-      return [
-        'Sensitive groups should reduce prolonged exertion outdoors',
-        'Consider wearing a mask if doing heavy outdoor exercise',
-        'Indoor air quality is generally good',
-      ];
-    }
-    return [
-      'Wear a mask (N95/KN95) when outdoors',
-      'Limit time outdoors, especially with children',
-      'Keep windows closed and use air purifiers indoors',
-      'Avoid vigorous outdoor activities',
-    ];
-  }
 }
 
-class _Pollutant {
-  final String name;
+class _PollutantTile extends StatelessWidget {
+  final String label;
   final double value;
-  final double max;
   final String unit;
-  final String description;
+  final double maxVal;
+  final Color color;
 
-  const _Pollutant(
-      this.name, this.value, this.max, this.unit, this.description);
-}
-
-class _PollutantRow extends StatelessWidget {
-  final _Pollutant pollutant;
-
-  const _PollutantRow({required this.pollutant});
-
-  Color get _barColor {
-    final ratio = pollutant.value / pollutant.max;
-    if (ratio < 0.4) return Colors.green.shade500;
-    if (ratio < 0.7) return Colors.orange.shade500;
-    return Colors.red.shade500;
-  }
+  const _PollutantTile({required this.label, required this.value, required this.unit, required this.maxVal, required this.color});
 
   @override
   Widget build(BuildContext context) {
-    final ratio = (pollutant.value / pollutant.max).clamp(0.0, 1.0);
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
+    final progress = (value / maxVal).clamp(0.0, 1.0);
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppTheme.cardBg,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: AppTheme.cardShadow,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(pollutant.name,
-                  style: const TextStyle(
-                      fontWeight: FontWeight.w700, fontSize: 13)),
-              Text(
-                '${pollutant.value} ${pollutant.unit}',
-                style: TextStyle(
-                    color: _barColor,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 12),
-              ),
+              Text(label, style: const TextStyle(color: AppTheme.textPrimary, fontSize: 14, fontWeight: FontWeight.w600)),
+              Text('$value $unit', style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
             ],
           ),
-          const SizedBox(height: 4),
-          Text(pollutant.description,
-              style: const TextStyle(
-                  color: AppTheme.textSecondary, fontSize: 11)),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           ClipRRect(
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: BorderRadius.circular(3),
             child: LinearProgressIndicator(
-              value: ratio,
+              value: progress,
               backgroundColor: AppTheme.divider,
-              valueColor: AlwaysStoppedAnimation<Color>(_barColor),
+              color: color,
               minHeight: 6,
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ScaleRow extends StatelessWidget {
+  final String range;
+  final String label;
+  final Color color;
+
+  const _ScaleRow({required this.range, required this.label, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Row(
+        children: [
+          Container(width: 12, height: 12, decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(3))),
+          const SizedBox(width: 12),
+          SizedBox(width: 70, child: Text(range, style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12))),
+          const SizedBox(width: 8),
+          Text(label, style: const TextStyle(color: AppTheme.textPrimary, fontSize: 13, fontWeight: FontWeight.w500)),
         ],
       ),
     );
